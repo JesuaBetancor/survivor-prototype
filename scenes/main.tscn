@@ -1,8 +1,11 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="Script" path="res://scripts/arena.gd" id="2_arena"]
 [ext_resource type="PackedScene" path="res://scenes/player.tscn" id="3_player"]
+[ext_resource type="Script" path="res://scripts/spawner.gd" id="4_spawner"]
+[ext_resource type="PackedScene" path="res://scenes/enemy.tscn" id="5_enemy"]
+[ext_resource type="Resource" path="res://resources/fodder.tres" id="6_fodder"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
@@ -10,4 +13,19 @@ script = ExtResource("1_main")
 [node name="Arena" type="Node2D" parent="."]
 script = ExtResource("2_arena")
 
+[node name="Spawner" type="Node2D" parent="."]
+script = ExtResource("4_spawner")
+enemy_scene = ExtResource("5_enemy")
+default_type = ExtResource("6_fodder")
+
 [node name="Player" parent="." instance=ExtResource("3_player")]
+
+[node name="DebugLayer" type="CanvasLayer" parent="."]
+
+[node name="DebugLabel" type="Label" parent="DebugLayer"]
+offset_left = 16.0
+offset_top = 12.0
+offset_right = 520.0
+offset_bottom = 120.0
+theme_override_colors/font_color = Color(1, 1, 1, 0.72)
+theme_override_font_sizes/font_size = 14

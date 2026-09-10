@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="EnemyType" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemy_type.gd" id="1_enemy_type"]
+
+[resource]
+script = ExtResource("1_enemy_type")
+display_name = "Fodder"
+color = Color(0.937, 0.325, 0.314, 1)
+telegraph_color = Color(1, 0.933, 0.345, 1)
+attack_color = Color(1, 1, 1, 1)
+radius = 14.0
+speed = 95.0
+attack_range = 46.0
+telegraph_duration = 0.8
+attack_duration = 0.15
+recovery_duration = 0.6
+damage = 1
+parry_hits_required = 1
+is_parriable = true
+xp_value = 1
