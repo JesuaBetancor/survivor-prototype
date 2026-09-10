@@ -4,6 +4,16 @@ extends Node2D
 ## wires the arena bounds into the player, the camera and the spawner, and
 ## drives the HUD.
 
+const FLOATING_TEXT: PackedScene = preload("res://scenes/floating_text.tscn")
+
+@export_group("Juice")
+## Two frames at 60 Hz. Long enough to read as weight, short enough not to feel
+## like a stutter when parries come in quick succession.
+@export var hit_stop_seconds: float = 0.034
+@export var shake_base: float = 3.0
+@export var shake_per_extra_hit: float = 1.2
+@export var shake_on_damage: float = 7.0
+
 ## XP needed for the first level-up, then how much each level adds.
 const XP_BASE: int = 8
 const XP_STEP: int = 6
@@ -19,6 +29,8 @@ const UPGRADE_CHOICES: int = 3
 @onready var health_pips: HealthPips = $HUD/HealthPips
 @onready var game_over: Control = $HUD/GameOver
 @onready var level_up: Control = $HUD/LevelUp
+@onready var hit_stop: HitStop = $HitStop
+@onready var sfx: Sfx = $Sfx
 
 ## Single source of truth for elapsed survival time: both the HUD and the spawn
 ## cadence read it, so the clock on screen always matches the pressure.
@@ -38,10 +50,17 @@ var _option_buttons: Array[Button] = []
 
 
 func _ready() -> void:
+	# Engine.time_scale is global and survives a scene reload, so a run that
+	# died mid-hit-stop must not hand the next one a frozen world.
+	hit_stop.release()
+
 	var bounds: Rect2 = arena.get_bounds()
 
 	player.movement_bounds = bounds
 	player.parry_pulsed.connect(_on_parry_pulsed)
+	player.parry_hit.connect(_on_parry_hit)
+	player.parry_started.connect(_on_parry_started)
+	player.health_changed.connect(_on_health_changed)
 	player.health_changed.connect(health_pips.set_health)
 	player.died.connect(_on_player_died)
 	health_pips.set_health(player.health, player.max_health)
@@ -139,6 +158,7 @@ func _show_upgrade_choices() -> void:
 
 	level_up.visible = true
 	_option_buttons[0].grab_focus()
+	sfx.play(&"level_up")
 	get_tree().paused = true
 
 
@@ -184,6 +204,45 @@ func _on_player_hit(_damage: int) -> void:
 	_hits_taken += 1
 
 
+# --- Juice -----------------------------------------------------------------
+
+func _on_parry_started() -> void:
+	sfx.play(&"parry_swing", 0.08)
+
+
+## Hit-stop and the impact sound fire once per pulse; shake and the damage
+## readout scale with how many enemies the pulse caught.
+func _on_parry_hit(enemy: Enemy, hits_in_pulse: int) -> void:
+	var killed: bool = enemy.is_dying()
+
+	if hits_in_pulse == 1:
+		hit_stop.freeze(hit_stop_seconds)
+		sfx.play(&"parry_kill" if killed else &"parry_hit", 0.1)
+
+	player.camera.shake(shake_base + shake_per_extra_hit * float(hits_in_pulse - 1))
+	_spawn_floating_text(enemy, killed)
+
+
+func _spawn_floating_text(enemy: Enemy, killed: bool) -> void:
+	var label: FloatingText = FLOATING_TEXT.instantiate()
+	label.position = enemy.global_position + Vector2(0.0, -enemy.type.radius - 6.0)
+	add_child(label)
+	# Sized and coloured by outcome, so a kill reads differently from a hit that
+	# only chipped a tougher enemy.
+	if killed:
+		label.setup("%d" % player.parry_damage, Color("b2ff59"), 28)
+	else:
+		label.setup("%d" % player.parry_damage, Color("ffffff"), 20)
+
+
+## Damage needs its own kick, and a heavier one than a parry: getting hit is the
+## thing the player most needs to notice without looking at the health pips.
+func _on_health_changed(current: int, maximum: int) -> void:
+	if current < maximum and current >= 0:
+		player.camera.shake(shake_on_damage, 34.0)
+		sfx.play(&"player_hurt", 0.06)
+
+
 ## Accuracy is the fastest read on whether the window and radius are tuned
 ## sanely: a run that lands 95% of pulses is too forgiving.
 func _on_parry_pulsed(hits: int) -> void:
@@ -199,12 +258,16 @@ func _on_player_died() -> void:
 		level, _kills, _pulses_connected, _pulses]
 	game_over.visible = true
 	($HUD/GameOver/Box/Retry as Button).grab_focus()
+	sfx.play(&"game_over")
+	# A death landing inside a hit-stop would otherwise freeze the defeat screen.
+	hit_stop.release()
 	# Both panels are process_mode ALWAYS, so they keep working while everything
 	# else is frozen.
 	get_tree().paused = true
 
 
 func _on_retry_pressed() -> void:
+	hit_stop.release()
 	get_tree().paused = false
 	get_tree().reload_current_scene()
 

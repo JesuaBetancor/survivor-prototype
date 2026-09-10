@@ -8,10 +8,13 @@ const SPEED: float = 250.0
 ## How long the pulse visual lingers after the window closes.
 const PULSE_FADE: float = 0.22
 
-## Emitted the instant an enemy is parried. Phase 7 hangs hit-stop and screen
-## shake off this: waiting for the window to close would delay the impact by up
-## to a full window, which is exactly the feedback that has to be immediate.
-signal parry_hit(enemy: Enemy)
+## Emitted the instant an enemy is parried, with how many enemies this pulse has
+## hit so far (1 for the first). Hit-stop and the impact sound fire on the first
+## only; shake and floating text scale with the rest.
+signal parry_hit(enemy: Enemy, hits_in_pulse: int)
+## Emitted when a pulse opens, hit or miss, so the swing can be heard before it
+## is known whether it connected.
+signal parry_started
 ## Emitted when the window closes, carrying the pulse total. Stats, not juice.
 signal parry_pulsed(hits: int)
 signal health_changed(current: int, maximum: int)
@@ -60,7 +63,7 @@ var _pulse_connected: bool = false
 ## through the same enemy on consecutive frames.
 var _pulse_victims: Array[Enemy] = []
 
-@onready var camera: Camera2D = $Camera2D
+@onready var camera: GameCamera = $Camera2D
 @onready var parry_area: Area2D = $ParryArea
 @onready var _parry_shape: CollisionShape2D = $ParryArea/CollisionShape2D
 
@@ -162,6 +165,7 @@ func _start_pulse() -> void:
 	_pulse_age = 0.0
 	_pulse_connected = false
 	_pulse_victims.clear()
+	parry_started.emit()
 	_sweep_pulse()
 
 
@@ -180,7 +184,7 @@ func _sweep_pulse() -> void:
 		enemy.receive_parry(parry_damage)
 		_pulse_victims.append(enemy)
 		_pulse_connected = true
-		parry_hit.emit(enemy)
+		parry_hit.emit(enemy, _pulse_victims.size())
 
 		# Rewards the kill, not the touch, so the upgrade pays off for finishing
 		# an enemy rather than for grazing a crowd.

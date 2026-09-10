@@ -37,3 +37,11 @@ Alternativas si el tope se siente artificial:
 
 - Que expiren solos pasados N segundos.
 - Que sí sean matables, pero solo durante `Recovery` (otra ventana, otro timing).
+
+## Audio de verdad
+
+Todo el sonido actual está **sintetizado en runtime** en `scripts/sfx.gd`: tonos
+cortos con decaimiento, sin ningún asset. Sirven para saber si un parry conectó,
+y para nada más. Antes de que esto lo juegue alguien que no seas tú, hay que
+sustituirlos por muestras reales — el sistema de reproducción (pool de 8 voces,
+`play(id, variación_de_tono)`) no cambia, solo de dónde salen los `AudioStream`.
