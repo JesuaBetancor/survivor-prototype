@@ -30,6 +30,28 @@ La primera vez macOS puede quejarse porque está firmado ad-hoc: click derecho �
 ./run.sh
 ```
 
+## Repartirlo a otra gente
+
+`./build.sh` genera los tres builds y los empaqueta en `build/dist/`:
+
+| Archivo | Tamaño | Notas |
+|---|---|---|
+| `ParrySurvivor-0.1.0-Windows.zip` | 36 MB | `.exe` único, x86_64 |
+| `ParrySurvivor-0.1.0-Linux.tar.gz` | 27 MB | x86_64, `tar` para conservar el bit de ejecución |
+| `ParrySurvivor-0.1.0-macOS.zip` | 58 MB | universal (Apple Silicon + Intel) |
+
+Cada paquete lleva dentro un `LEEME.txt` con controles y **cómo saltarse el aviso
+del sistema**, porque los tres builds van sin firmar y los tres sistemas
+protestan:
+
+- **Windows** — SmartScreen: *Más información* → *Ejecutar de todas formas*.
+- **macOS** — Gatekeeper puede decir que la app está "dañada". No lo está, es la
+  cuarentena de descarga: `xattr -dr com.apple.quarantine ParrySurvivor.app`.
+- **Linux** — `chmod +x` y listo.
+
+`build/` está en `.gitignore`: son ~120 MB, no van al repo. Súbelos a Drive, o
+crea una release en GitHub y adjúntalos ahí.
+
 ## Controles
 
 | Tecla | Acción |
