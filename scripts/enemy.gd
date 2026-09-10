@@ -121,6 +121,12 @@ func is_parry_vulnerable() -> bool:
 	return state == State.TELEGRAPH
 
 
+## True once the enemy is dead and only playing out its death effect. Lets the
+## parry pulse tell a kill from a hit that merely landed.
+func is_dying() -> bool:
+	return _dying
+
+
 func receive_parry(damage: int) -> void:
 	if _dying or not is_parry_vulnerable():
 		return

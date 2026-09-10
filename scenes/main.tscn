@@ -47,6 +47,26 @@ offset_bottom = 62.0
 grow_horizontal = 0
 script = ExtResource("9_pips")
 
+[node name="XPBar" type="ProgressBar" parent="HUD"]
+anchor_right = 1.0
+offset_bottom = 8.0
+grow_horizontal = 2
+max_value = 1.0
+step = 0.001
+show_percentage = false
+
+[node name="LevelLabel" type="Label" parent="HUD"]
+anchor_right = 1.0
+offset_top = 60.0
+offset_bottom = 84.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0.7, 1, 0.36, 0.9)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.75)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 18
+text = "Nv. 1"
+horizontal_alignment = 1
+
 [node name="DebugLabel" type="Label" parent="HUD"]
 offset_left = 16.0
 offset_top = 12.0
@@ -106,3 +126,57 @@ layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 20
 text = "Reintentar"
+
+[node name="LevelUp" type="Control" parent="HUD"]
+process_mode = 3
+visible = false
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Dim" type="ColorRect" parent="HUD/LevelUp"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.04, 0.05, 0.04, 0.85)
+
+[node name="Box" type="VBoxContainer" parent="HUD/LevelUp"]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -320.0
+offset_top = -170.0
+offset_right = 320.0
+offset_bottom = 170.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="Title" type="Label" parent="HUD/LevelUp/Box"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 1, 0.36, 1)
+theme_override_font_sizes/font_size = 40
+text = "¡Nivel 2!"
+horizontal_alignment = 1
+
+[node name="Subtitle" type="Label" parent="HUD/LevelUp/Box"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 0.6)
+theme_override_font_sizes/font_size = 16
+text = "Elige una mejora"
+horizontal_alignment = 1
+
+[node name="Option0" type="Button" parent="HUD/LevelUp/Box"]
+custom_minimum_size = Vector2(0, 54)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+
+[node name="Option1" type="Button" parent="HUD/LevelUp/Box"]
+custom_minimum_size = Vector2(0, 54)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+
+[node name="Option2" type="Button" parent="HUD/LevelUp/Box"]
+custom_minimum_size = Vector2(0, 54)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18

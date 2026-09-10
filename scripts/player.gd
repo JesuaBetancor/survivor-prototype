@@ -37,6 +37,9 @@ signal died
 	set = _set_parry_radius
 @export var parry_cooldown: float = 0.5
 @export var parry_damage: int = 1
+## Seconds of invulnerability granted per enemy killed by a parry. 0 disables
+## it; the phase 6 upgrade turns it on and then extends it.
+@export var invuln_on_parry_kill: float = 0.0
 @export var parry_ready_color: Color = Color("b2ff59")
 @export var parry_whiff_color: Color = Color("90a4ae")
 
@@ -178,6 +181,11 @@ func _sweep_pulse() -> void:
 		_pulse_victims.append(enemy)
 		_pulse_connected = true
 		parry_hit.emit(enemy)
+
+		# Rewards the kill, not the touch, so the upgrade pays off for finishing
+		# an enemy rather than for grazing a crowd.
+		if invuln_on_parry_kill > 0.0 and enemy.is_dying():
+			grant_invulnerability(invuln_on_parry_kill)
 
 
 func _set_parry_radius(value: float) -> void:
