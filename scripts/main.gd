@@ -1,15 +1,18 @@
 extends Node2D
 
-## Root of the gameplay scene. Wires the arena bounds into the player, the
-## camera and the spawner, and keeps a debug readout until the real HUD lands
-## in phase 4.
+## Root of the gameplay scene. Owns the run clock, wires the arena bounds into
+## the player, the camera and the spawner, and drives the HUD.
 
 @onready var arena: Arena = $Arena
 @onready var player: Player = $Player
 @onready var spawner: Spawner = $Spawner
-@onready var debug_label: Label = $DebugLayer/DebugLabel
+@onready var time_label: Label = $HUD/TimeLabel
+@onready var debug_label: Label = $HUD/DebugLabel
 
-var _alive: int = 0
+## Single source of truth for elapsed survival time: both the HUD and the spawn
+## cadence read it, so the clock on screen always matches the pressure.
+var run_time: float = 0.0
+
 var _kills: int = 0
 var _hits_taken: int = 0
 var _pulses: int = 0
@@ -28,28 +31,43 @@ func _ready() -> void:
 	spawner.enemy_spawned.connect(_on_enemy_spawned)
 
 
-func _process(_delta: float) -> void:
-	var accuracy: String = "-"
-	if _pulses > 0:
-		accuracy = "%d%%" % roundi(100.0 * float(_pulses_connected) / float(_pulses))
+## The run clock drives both the HUD and the spawn cadence, so it lives on the
+## fixed timestep alongside them. Main sits above the spawner in the tree, so
+## the value is always current by the time the spawner reads it.
+func _physics_process(delta: float) -> void:
+	run_time += delta
+	spawner.run_time = run_time
 
+
+func _process(_delta: float) -> void:
+	time_label.text = format_clock(run_time)
 	debug_label.text = "\n".join([
-		"[E] enemigos   [WASD] mover   [Espacio/Click] parry",
-		"Enemigos: %d    Bajas: %d    Golpes recibidos: %d" % [_alive, _kills, _hits_taken],
-		"Parries: %d de %d pulsos (%s acierto)" % [_pulses_connected, _pulses, accuracy],
-		"Ventana %.2fs · radio %.0f · cooldown %.2fs" % [
-			player.parry_window, player.parry_radius, player.parry_cooldown],
+		"[WASD] mover   [Espacio/Click] parry   [E] +enemigos",
+		"Enemigos: %d    Bajas: %d    Golpes recibidos: %d" % [
+			spawner.alive_count, _kills, _hits_taken],
+		"Parries: %d de %d pulsos (%s acierto)" % [
+			_pulses_connected, _pulses, _accuracy_text()],
+		"Oleada: 1 enemigo cada %.2fs" % spawner.current_interval(),
 	])
 
 
+static func format_clock(seconds: float) -> String:
+	var total: int = int(seconds)
+	return "%02d:%02d" % [total / 60, total % 60]
+
+
+func _accuracy_text() -> String:
+	if _pulses == 0:
+		return "-"
+	return "%d%%" % roundi(100.0 * float(_pulses_connected) / float(_pulses))
+
+
 func _on_enemy_spawned(enemy: Enemy) -> void:
-	_alive += 1
 	enemy.died.connect(_on_enemy_died)
 	enemy.hit_player.connect(_on_player_hit)
 
 
 func _on_enemy_died(_enemy: Enemy, _xp: int) -> void:
-	_alive -= 1
 	_kills += 1
 
 

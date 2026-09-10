@@ -63,6 +63,10 @@ func _enter_state(next: State) -> void:
 		State.TELEGRAPH, State.RECOVERY:
 			velocity = Vector2.ZERO
 
+	# A telegraph buried under a swarm is a telegraph the player cannot answer,
+	# so winding-up enemies draw above the crowd.
+	z_index = 1 if state == State.TELEGRAPH else 0
+
 	queue_redraw()
 
 
