@@ -10,6 +10,9 @@ enum State { IDLE, TELEGRAPH, ATTACK, RECOVERY }
 
 signal died(enemy: Enemy, xp: int)
 signal hit_player(damage: int)
+## Ranged types emit this instead of hit_player; the shot carries the damage and
+## reports its own hit, so nothing depends on the shooter still being alive.
+signal projectile_fired(projectile: Projectile)
 
 @export var type: EnemyType
 
@@ -106,13 +109,32 @@ func _tick_recovery() -> void:
 		_enter_state(State.IDLE)
 
 
-## Fired once, on entering Attack. The player only gets hit if they are still in
-## range when the swing lands, so backing off is a valid answer to a telegraph.
+## Fired once, on entering Attack. For melee types the player only gets hit if
+## they are still in range when the swing lands, so backing off is a valid answer
+## to a telegraph. Ranged types launch a projectile instead.
 func _resolve_attack() -> void:
 	if not is_instance_valid(target):
 		return
+
+	if type.projectile_scene != null:
+		_fire_projectile()
+		return
+
 	if global_position.distance_to(target.global_position) <= type.attack_range:
 		hit_player.emit(type.damage)
+
+
+func _fire_projectile() -> void:
+	var shot: Projectile = type.projectile_scene.instantiate()
+	shot.setup(
+		type.damage, type.projectile_speed,
+		global_position.direction_to(target.global_position), type.color
+	)
+	shot.global_position = global_position
+	# Parented to the spawner, not to self: the shot has to outlive a shooter
+	# that gets parried a frame later.
+	get_parent().add_child(shot)
+	projectile_fired.emit(shot)
 
 
 # --- Parry interface (driven by the player's pulse in phase 3) --------------
@@ -186,16 +208,28 @@ func _draw() -> void:
 	match type.shape:
 		EnemyType.Shape.TRIANGLE:
 			_draw_triangle(size, color)
+		EnemyType.Shape.RING:
+			_draw_ring(size, color)
 		_:
 			draw_circle(Vector2.ZERO, size, color, true, -1.0, true)
 
 	if state == State.TELEGRAPH:
 		_draw_telegraph_ring()
+		if type.projectile_scene != null:
+			_draw_aim_line()
 
 
 ## Unparriable types wear a triangle so the "you cannot parry this, move" rule
 ## is legible from the silhouette alone, even buried in a red swarm. Drawn along
 ## local +X; the node's rotation aims it.
+## A hollow ring with a pip in the middle, reading as a sight. Ranged types are
+## the only ones the player must close on or out-range, so they cannot look like
+## the melee crowd they sit behind.
+func _draw_ring(size: float, color: Color) -> void:
+	draw_arc(Vector2.ZERO, size * 0.74, 0.0, TAU, 32, color, size * 0.52, true)
+	draw_circle(Vector2.ZERO, size * 0.3, color, true, -1.0, true)
+
+
 func _draw_triangle(size: float, color: Color) -> void:
 	draw_colored_polygon(PackedVector2Array([
 		Vector2(size * 1.5, 0.0),
@@ -214,6 +248,21 @@ func _draw_telegraph_ring() -> void:
 	draw_arc(
 		Vector2.ZERO, ring_radius, 0.0, TAU, 40,
 		Color(type.telegraph_color, alpha), 2.5, true
+	)
+
+
+## Ranged wind-ups need to show *where* the shot is going, not just that one is
+## coming: at 340 px the enemy is off in the crowd and the line is the only cue
+## tying it to the player.
+func _draw_aim_line() -> void:
+	if not is_instance_valid(target):
+		return
+	var progress: float = clampf(_state_time / type.telegraph_duration, 0.0, 1.0)
+	var local_target: Vector2 = to_local(target.global_position)
+	draw_line(
+		Vector2.ZERO, local_target,
+		Color(type.telegraph_color, lerpf(0.15, 0.7, progress)),
+		lerpf(1.0, 2.5, progress), true
 	)
 
 

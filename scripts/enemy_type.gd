@@ -4,10 +4,11 @@ extends Resource
 ## Per-type enemy tuning. One Enemy.tscn is reused for every type; only this
 ## resource changes. Adding a new enemy kind means adding a .tres, not a scene.
 
-## Silhouette. Shape carries the parry rule at a glance: circles can be
-## parried, triangles never can, so the player reads counterplay from the
-## outline before the colour registers.
-enum Shape { CIRCLE, TRIANGLE }
+## Silhouette. Shape carries the counterplay at a glance, before colour
+## registers: solid circles are parriable melee, triangles can never be parried
+## and must be dodged, rings shoot from outside your pulse. Hue alone was not
+## enough once four types shared a crowded screen.
+enum Shape { CIRCLE, TRIANGLE, RING }
 
 @export var display_name: String = "Fodder"
 
@@ -41,6 +42,12 @@ enum Shape { CIRCLE, TRIANGLE }
 ## must be dodged instead.
 @export var is_parriable: bool = true
 @export var xp_value: int = 1
+
+@export_group("Ranged")
+## When set, Attack fires one of these instead of resolving as a melee hit, and
+## attack_range becomes firing range.
+@export var projectile_scene: PackedScene
+@export var projectile_speed: float = 230.0
 
 @export_group("Spawning")
 ## Run time in seconds before this type starts appearing at all.

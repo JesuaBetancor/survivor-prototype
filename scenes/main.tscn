@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="Script" path="res://scripts/arena.gd" id="2_arena"]
@@ -9,6 +9,7 @@
 [ext_resource type="Resource" path="res://resources/tank.tres" id="7_tank"]
 [ext_resource type="Resource" path="res://resources/unparriable.tres" id="8_unparriable"]
 [ext_resource type="Script" path="res://scripts/health_pips.gd" id="9_pips"]
+[ext_resource type="Resource" path="res://resources/ranged.tres" id="10_ranged"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
@@ -19,7 +20,7 @@ script = ExtResource("2_arena")
 [node name="Spawner" type="Node2D" parent="."]
 script = ExtResource("4_spawner")
 enemy_scene = ExtResource("5_enemy")
-enemy_types = Array[ExtResource("6_fodder")]([ExtResource("6_fodder"), ExtResource("7_tank"), ExtResource("8_unparriable")])
+enemy_types = Array[ExtResource("6_fodder")]([ExtResource("6_fodder"), ExtResource("7_tank"), ExtResource("10_ranged"), ExtResource("8_unparriable")])
 
 [node name="Player" parent="." instance=ExtResource("3_player")]
 

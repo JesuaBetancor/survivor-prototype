@@ -165,6 +165,14 @@ func _on_enemy_spawned(enemy: Enemy) -> void:
 	enemy.died.connect(_on_enemy_died)
 	enemy.hit_player.connect(player.take_damage)
 	enemy.hit_player.connect(_on_player_hit)
+	enemy.projectile_fired.connect(_on_projectile_fired)
+
+
+## Shots take the same damage path as melee hits, so there is one place where
+## the player can be hurt and one place where hits are counted.
+func _on_projectile_fired(projectile: Projectile) -> void:
+	projectile.hit_player.connect(player.take_damage)
+	projectile.hit_player.connect(_on_player_hit)
 
 
 func _on_enemy_died(_enemy: Enemy, enemy_xp: int) -> void:
