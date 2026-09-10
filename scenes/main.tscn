@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3]
+[gd_scene load_steps=14 format=3]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="Script" path="res://scripts/arena.gd" id="2_arena"]
@@ -12,6 +12,7 @@
 [ext_resource type="Resource" path="res://resources/ranged.tres" id="10_ranged"]
 [ext_resource type="Script" path="res://scripts/hit_stop.gd" id="11_hitstop"]
 [ext_resource type="Script" path="res://scripts/sfx.gd" id="12_sfx"]
+[ext_resource type="Script" path="res://scripts/playtest_keys.gd" id="13_keys"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
@@ -33,6 +34,10 @@ script = ExtResource("11_hitstop")
 [node name="Sfx" type="Node" parent="."]
 process_mode = 3
 script = ExtResource("12_sfx")
+
+[node name="PlaytestKeys" type="Node" parent="."]
+process_mode = 3
+script = ExtResource("13_keys")
 
 [node name="HUD" type="CanvasLayer" parent="."]
 

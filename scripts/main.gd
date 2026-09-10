@@ -88,7 +88,7 @@ func _physics_process(delta: float) -> void:
 func _process(_delta: float) -> void:
 	time_label.text = format_clock(run_time)
 	debug_label.text = "\n".join([
-		"[WASD] mover   [Espacio/Click] parry   [E] +enemigos",
+		"[WASD] mover   [Espacio/Click] parry   [E] +enemigos   [R] reiniciar   [Esc] salir",
 		"Enemigos: %d    Bajas: %d    Golpes recibidos: %d" % [
 			spawner.alive_count, _kills, _hits_taken],
 		"Parries: %d de %d pulsos (%s acierto)" % [
