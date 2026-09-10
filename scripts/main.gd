@@ -74,9 +74,9 @@ func _process(_delta: float) -> void:
 			spawner.alive_count, _kills, _hits_taken],
 		"Parries: %d de %d pulsos (%s acierto)" % [
 			_pulses_connected, _pulses, _accuracy_text()],
-		"Ventana %.2fs · radio %.0f · cooldown %.2fs · daño %d · i-frames %.2fs" % [
+		"Ventana %.2fs · radio %.0f · cooldown %.2fs · daño %d/%d · i-frames %.2fs" % [
 			player.parry_window, player.parry_radius, player.parry_cooldown,
-			player.parry_damage, player.invuln_on_parry_kill],
+			player.parry_damage, _damage_cap(), player.invuln_on_parry_kill],
 		"Oleada: 1 enemigo cada %.2fs   |   %s" % [spawner.current_interval(), _mix_text()],
 	])
 
@@ -108,13 +108,19 @@ func gain_xp(amount: int) -> void:
 		_show_upgrade_choices()
 
 
+## Derived from the live roster, so adding a tougher enemy reopens the damage
+## upgrade on its own.
+func _damage_cap() -> int:
+	return Upgrades.damage_cap_for(spawner.enemy_types)
+
+
 func _refresh_progress_hud() -> void:
 	level_label.text = "Nv. %d" % level
 	xp_bar.value = float(xp) / float(xp_for_next_level())
 
 
 func _show_upgrade_choices() -> void:
-	_offered = Upgrades.roll(player, UPGRADE_CHOICES)
+	_offered = Upgrades.roll(player, UPGRADE_CHOICES, _damage_cap())
 	if _offered.is_empty():
 		# Everything is maxed out; nothing left to spend levels on. Tear the
 		# panel down explicitly: reaching this from an earlier choice would

@@ -13,9 +13,18 @@ const COOLDOWN_FACTOR: float = 0.82
 const COOLDOWN_FLOOR: float = 0.15
 const IFRAME_STEP: float = 0.3
 const IFRAME_CAP: float = 1.2
-## Matches the toughest enemy's parry_hits_required: past this the upgrade buys
-## nothing, and offering it would crowd out choices that still matter.
-const DAMAGE_CAP: int = 3
+
+
+## One below the toughest parriable enemy in the roster, so the hardest thing on
+## the field always costs at least two parries. Derived rather than fixed: add a
+## 5-hit enemy and the upgrade reopens up to 4, which one-shots the 3-hit type
+## while still costing two hits on the new one.
+static func damage_cap_for(types: Array[EnemyType]) -> int:
+	var toughest: int = 1
+	for type: EnemyType in types:
+		if type.is_parriable:
+			toughest = maxi(toughest, type.parry_hits_required)
+	return maxi(1, toughest - 1)
 
 
 ## One offerable upgrade. `detail` renders the before/after so the player can
@@ -44,7 +53,7 @@ class Entry extends RefCounted:
 		return available.call(player)
 
 
-static func pool() -> Array[Entry]:
+static func pool(damage_cap: int) -> Array[Entry]:
 	var entries: Array[Entry] = []
 
 	entries.append(Entry.new(
@@ -95,11 +104,11 @@ static func pool() -> Array[Entry]:
 		&"damage", "Parry más fuerte",
 		func(p: Player) -> String:
 			return "%d → %d de daño (los resistentes caen antes)" % [
-				p.parry_damage, mini(p.parry_damage + 1, DAMAGE_CAP)],
+				p.parry_damage, mini(p.parry_damage + 1, damage_cap)],
 		func(p: Player) -> void:
-			p.parry_damage = mini(p.parry_damage + 1, DAMAGE_CAP),
+			p.parry_damage = mini(p.parry_damage + 1, damage_cap),
 		func(p: Player) -> bool:
-			return p.parry_damage < DAMAGE_CAP
+			return p.parry_damage < damage_cap
 	))
 
 	return entries
@@ -107,9 +116,9 @@ static func pool() -> Array[Entry]:
 
 ## Up to `count` distinct upgrades the player can still benefit from. Returns
 ## fewer only when the pool itself is exhausted.
-static func roll(player: Player, count: int) -> Array[Entry]:
+static func roll(player: Player, count: int, damage_cap: int) -> Array[Entry]:
 	var candidates: Array[Entry] = []
-	for entry: Entry in pool():
+	for entry: Entry in pool(damage_cap):
 		if entry.is_available(player):
 			candidates.append(entry)
 
