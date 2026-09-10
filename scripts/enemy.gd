@@ -22,6 +22,8 @@ var parry_hits_taken: int = 0
 
 var _state_time: float = 0.0
 var _dying: bool = false
+## 1.0 right after a non-lethal parry, tweened back to 0.
+var _hurt_flash: float = 0.0
 
 
 func _ready() -> void:
@@ -119,7 +121,9 @@ func receive_parry(damage: int) -> void:
 	if parry_hits_taken >= type.parry_hits_required:
 		kill()
 	else:
-		# Survived the parry: knocked back into recovery instead of attacking.
+		# Survived the parry: knocked back into recovery instead of attacking, so
+		# tougher types cost several telegraph cycles rather than one combo.
+		_play_survived_effect()
 		_enter_state(State.RECOVERY)
 
 
@@ -129,7 +133,34 @@ func kill() -> void:
 	_dying = true
 	velocity = Vector2.ZERO
 	died.emit(self, type.xp_value)
-	queue_free()
+	_play_death_effect()
+
+
+## White flash that swells and fades out. Placeholder juice, but the parry has
+## to *read* as landed from the first playable build, not only in the debugger.
+func _play_death_effect() -> void:
+	set_physics_process(false)
+	(get_node("CollisionShape2D") as CollisionShape2D).set_deferred("disabled", true)
+	queue_redraw()
+
+	var tween: Tween = create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(self, "scale", Vector2.ONE * 1.7, 0.18) \
+		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tween.tween_property(self, "modulate:a", 0.0, 0.18)
+	tween.chain().tween_callback(queue_free)
+
+
+## Flash for a parry that landed but did not kill, so multi-hit types still give
+## the player confirmation that the timing was right.
+func _play_survived_effect() -> void:
+	var tween: Tween = create_tween()
+	tween.tween_method(_set_hurt_flash, 1.0, 0.0, 0.25)
+
+
+func _set_hurt_flash(value: float) -> void:
+	_hurt_flash = value
+	queue_redraw()
 
 
 # --- Drawing ---------------------------------------------------------------
@@ -155,6 +186,16 @@ func _draw_telegraph_ring() -> void:
 
 
 func _current_color() -> Color:
+	if _dying:
+		return Color.WHITE
+
+	if _hurt_flash > 0.0:
+		return _state_color().lerp(Color.WHITE, _hurt_flash)
+
+	return _state_color()
+
+
+func _state_color() -> Color:
 	match state:
 		State.TELEGRAPH:
 			# Ramp towards the telegraph colour so the wind-up reads even when
