@@ -5,6 +5,7 @@
 [resource]
 script = ExtResource("1_enemy_type")
 display_name = "Fodder"
+shape = 0
 color = Color(0.937, 0.325, 0.314, 1)
 telegraph_color = Color(1, 0.933, 0.345, 1)
 attack_color = Color(1, 1, 1, 1)
@@ -18,3 +19,7 @@ damage = 1
 parry_hits_required = 1
 is_parriable = true
 xp_value = 1
+unlock_time = 0.0
+spawn_weight = 100.0
+weight_ramp_seconds = 0.0
+max_concurrent = 0

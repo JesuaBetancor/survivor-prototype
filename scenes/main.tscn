@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="Script" path="res://scripts/arena.gd" id="2_arena"]
@@ -6,6 +6,9 @@
 [ext_resource type="Script" path="res://scripts/spawner.gd" id="4_spawner"]
 [ext_resource type="PackedScene" path="res://scenes/enemy.tscn" id="5_enemy"]
 [ext_resource type="Resource" path="res://resources/fodder.tres" id="6_fodder"]
+[ext_resource type="Resource" path="res://resources/tank.tres" id="7_tank"]
+[ext_resource type="Resource" path="res://resources/unparriable.tres" id="8_unparriable"]
+[ext_resource type="Script" path="res://scripts/health_pips.gd" id="9_pips"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
@@ -16,7 +19,7 @@ script = ExtResource("2_arena")
 [node name="Spawner" type="Node2D" parent="."]
 script = ExtResource("4_spawner")
 enemy_scene = ExtResource("5_enemy")
-default_type = ExtResource("6_fodder")
+enemy_types = Array[ExtResource("6_fodder")]([ExtResource("6_fodder"), ExtResource("7_tank"), ExtResource("8_unparriable")])
 
 [node name="Player" parent="." instance=ExtResource("3_player")]
 
@@ -34,10 +37,72 @@ theme_override_font_sizes/font_size = 40
 text = "00:00"
 horizontal_alignment = 1
 
+[node name="HealthPips" type="Control" parent="HUD"]
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -160.0
+offset_top = 22.0
+offset_right = -24.0
+offset_bottom = 62.0
+grow_horizontal = 0
+script = ExtResource("9_pips")
+
 [node name="DebugLabel" type="Label" parent="HUD"]
 offset_left = 16.0
 offset_top = 12.0
-offset_right = 520.0
-offset_bottom = 140.0
+offset_right = 560.0
+offset_bottom = 150.0
 theme_override_colors/font_color = Color(1, 1, 1, 0.6)
 theme_override_font_sizes/font_size = 13
+
+[node name="GameOver" type="Control" parent="HUD"]
+process_mode = 3
+visible = false
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Dim" type="ColorRect" parent="HUD/GameOver"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.04, 0.04, 0.06, 0.82)
+
+[node name="Box" type="VBoxContainer" parent="HUD/GameOver"]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -220.0
+offset_top = -120.0
+offset_right = 220.0
+offset_bottom = 120.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 14
+alignment = 1
+
+[node name="Title" type="Label" parent="HUD/GameOver/Box"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.32, 0.32, 1)
+theme_override_font_sizes/font_size = 46
+text = "Has caído"
+horizontal_alignment = 1
+
+[node name="Summary" type="Label" parent="HUD/GameOver/Box"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 0.9)
+theme_override_font_sizes/font_size = 22
+text = "Sobreviviste 00:00"
+horizontal_alignment = 1
+
+[node name="Detail" type="Label" parent="HUD/GameOver/Box"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 0.6)
+theme_override_font_sizes/font_size = 16
+horizontal_alignment = 1
+
+[node name="Retry" type="Button" parent="HUD/GameOver/Box"]
+custom_minimum_size = Vector2(200, 48)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 20
+text = "Reintentar"

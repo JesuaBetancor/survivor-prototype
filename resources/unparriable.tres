@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="EnemyType" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemy_type.gd" id="1_enemy_type"]
+
+[resource]
+script = ExtResource("1_enemy_type")
+display_name = "Esquivable"
+shape = 1
+color = Color(0.149, 0.776, 0.855, 1)
+telegraph_color = Color(0.149, 0.776, 0.855, 1)
+attack_color = Color(1, 1, 1, 1)
+radius = 12.0
+speed = 138.0
+attack_range = 34.0
+telegraph_duration = 0.0
+attack_duration = 0.15
+recovery_duration = 1.1
+damage = 1
+parry_hits_required = 1
+is_parriable = false
+xp_value = 0
+unlock_time = 90.0
+spawn_weight = 26.0
+weight_ramp_seconds = 60.0
+max_concurrent = 5

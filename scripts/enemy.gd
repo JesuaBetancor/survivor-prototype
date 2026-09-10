@@ -76,6 +76,10 @@ func _tick_idle() -> void:
 		return
 
 	velocity = global_position.direction_to(target.global_position) * type.speed
+	# Turning the node beats redrawing every frame to re-point the silhouette.
+	# Circles do not care, and their collision shape is radially symmetric.
+	if not velocity.is_zero_approx():
+		rotation = velocity.angle()
 
 	if global_position.distance_to(target.global_position) <= type.attack_range:
 		# Unparriable types skip the telegraph entirely: there is no window to
@@ -170,10 +174,28 @@ func _set_hurt_flash(value: float) -> void:
 # --- Drawing ---------------------------------------------------------------
 
 func _draw() -> void:
-	draw_circle(Vector2.ZERO, _current_radius(), _current_color(), true, -1.0, true)
+	var color: Color = _current_color()
+	var size: float = _current_radius()
+
+	match type.shape:
+		EnemyType.Shape.TRIANGLE:
+			_draw_triangle(size, color)
+		_:
+			draw_circle(Vector2.ZERO, size, color, true, -1.0, true)
 
 	if state == State.TELEGRAPH:
 		_draw_telegraph_ring()
+
+
+## Unparriable types wear a triangle so the "you cannot parry this, move" rule
+## is legible from the silhouette alone, even buried in a red swarm. Drawn along
+## local +X; the node's rotation aims it.
+func _draw_triangle(size: float, color: Color) -> void:
+	draw_colored_polygon(PackedVector2Array([
+		Vector2(size * 1.5, 0.0),
+		Vector2(-size * 0.7, size),
+		Vector2(-size * 0.7, -size),
+	]), color)
 
 
 ## A ring that closes in on the enemy over the telegraph. Its radius is the

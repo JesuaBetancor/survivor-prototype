@@ -7,7 +7,10 @@ extends Node2D
 signal enemy_spawned(enemy: Enemy)
 
 @export var enemy_scene: PackedScene
-@export var default_type: EnemyType
+## Every type that can appear. Each one carries its own unlock time, weight ramp
+## and concurrency cap, so the wave schedule lives beside the stats it applies
+## to instead of in a separate table.
+@export var enemy_types: Array[EnemyType] = []
 
 @export_group("Cadence")
 ## Seconds between spawns at the very start of a run.
@@ -37,6 +40,9 @@ var spawning_enabled: bool = true
 var run_time: float = 0.0
 
 var alive_count: int = 0
+## Live enemies per type, for the concurrency caps. A type that cannot be killed
+## never decrements, which is exactly why it needs a cap.
+var _alive_by_type: Dictionary[EnemyType, int] = {}
 var _accumulator: float = 0.0
 
 
@@ -51,14 +57,14 @@ func _physics_process(delta: float) -> void:
 	while _accumulator >= interval:
 		_accumulator -= interval
 		if alive_count < max_alive:
-			spawn(default_type)
+			spawn(pick_type())
 		interval = current_interval()
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("spawn_debug"):
 		for i: int in debug_burst_count:
-			spawn(default_type)
+			spawn(pick_type())
 
 
 ## Interpolating the spawn *rate* rather than the interval keeps the opening
@@ -68,6 +74,39 @@ func current_interval() -> float:
 	var progress: float = clampf(run_time / ramp_seconds, 0.0, 1.0)
 	var rate: float = lerpf(1.0 / base_interval, 1.0 / min_interval, progress * progress)
 	return 1.0 / rate
+
+
+## Weighted pick across everything unlocked and under its concurrency cap.
+func pick_type() -> EnemyType:
+	var eligible: Array[EnemyType] = []
+	var total: float = 0.0
+
+	for type: EnemyType in enemy_types:
+		if _at_concurrency_cap(type):
+			continue
+		var weight: float = type.weight_at(run_time)
+		if weight <= 0.0:
+			continue
+		eligible.append(type)
+		total += weight
+
+	if eligible.is_empty():
+		return null
+
+	var roll: float = randf() * total
+	for type: EnemyType in eligible:
+		roll -= type.weight_at(run_time)
+		if roll <= 0.0:
+			return type
+	return eligible.back()
+
+
+func _at_concurrency_cap(type: EnemyType) -> bool:
+	return type.max_concurrent > 0 and _alive_by_type.get(type, 0) >= type.max_concurrent
+
+
+func alive_of(type: EnemyType) -> int:
+	return _alive_by_type.get(type, 0)
 
 
 func spawn(type: EnemyType) -> Enemy:
@@ -83,12 +122,14 @@ func spawn(type: EnemyType) -> Enemy:
 
 	add_child(enemy)
 	alive_count += 1
+	_alive_by_type[type] = _alive_by_type.get(type, 0) + 1
 	enemy_spawned.emit(enemy)
 	return enemy
 
 
-func _on_enemy_died(_enemy: Enemy, _xp: int) -> void:
+func _on_enemy_died(enemy: Enemy, _xp: int) -> void:
 	alive_count -= 1
+	_alive_by_type[enemy.type] = maxi(0, _alive_by_type.get(enemy.type, 0) - 1)
 
 
 ## A jittered point on a ring around the player, kept inside the arena so

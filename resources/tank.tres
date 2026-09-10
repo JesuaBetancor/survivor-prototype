@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="EnemyType" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemy_type.gd" id="1_enemy_type"]
+
+[resource]
+script = ExtResource("1_enemy_type")
+display_name = "Resistente"
+shape = 0
+color = Color(0.671, 0.278, 0.737, 1)
+telegraph_color = Color(1, 0.835, 0.31, 1)
+attack_color = Color(1, 1, 1, 1)
+radius = 21.0
+speed = 62.0
+attack_range = 54.0
+telegraph_duration = 1.25
+attack_duration = 0.18
+recovery_duration = 0.55
+damage = 1
+parry_hits_required = 3
+is_parriable = true
+xp_value = 4
+unlock_time = 45.0
+spawn_weight = 40.0
+weight_ramp_seconds = 60.0
+max_concurrent = 0

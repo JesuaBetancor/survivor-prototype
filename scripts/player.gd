@@ -14,10 +14,19 @@ const PULSE_FADE: float = 0.22
 signal parry_hit(enemy: Enemy)
 ## Emitted when the window closes, carrying the pulse total. Stats, not juice.
 signal parry_pulsed(hits: int)
+signal health_changed(current: int, maximum: int)
+signal died
 
 @export var radius: float = 16.0
 @export var body_color: Color = Color("4fc3f7")
 @export var outline_color: Color = Color("e1f5fe")
+
+@export_group("Survival")
+@export var max_health: int = 3
+## Grace period after a hit. Without it a single overlapping pair of enemies
+## empties the health bar in one swing cycle.
+@export var invulnerable_time: float = 0.9
+@export var hurt_color: Color = Color("ff5252")
 
 @export_group("Parry")
 ## Seconds the pulse stays live. It is re-evaluated every physics frame while
@@ -34,7 +43,11 @@ signal parry_pulsed(hits: int)
 ## Arena rectangle the player is confined to. Set by Main at startup.
 var movement_bounds: Rect2 = Rect2()
 
+var health: int = 0
+var is_dead: bool = false
+
 var _facing: Vector2 = Vector2.RIGHT
+var _invulnerable_left: float = 0.0
 var _cooldown_left: float = 0.0
 var _window_left: float = 0.0
 ## Age of the current pulse visual; negative means no pulse on screen.
@@ -51,11 +64,43 @@ var _pulse_victims: Array[Enemy] = []
 
 func _ready() -> void:
 	_set_parry_radius(parry_radius)
+	health = max_health
+	health_changed.emit(health, max_health)
 
 
 func _physics_process(delta: float) -> void:
+	if _invulnerable_left > 0.0:
+		_invulnerable_left = maxf(0.0, _invulnerable_left - delta)
+		queue_redraw()
+
 	_update_parry(delta)
 	_update_movement()
+
+
+# --- Survival --------------------------------------------------------------
+
+func is_invulnerable() -> bool:
+	return _invulnerable_left > 0.0
+
+
+func take_damage(amount: int) -> void:
+	if is_dead or is_invulnerable():
+		return
+
+	health = maxi(0, health - amount)
+	_invulnerable_left = invulnerable_time
+	health_changed.emit(health, max_health)
+	queue_redraw()
+
+	if health == 0:
+		is_dead = true
+		died.emit()
+
+
+## Used by the phase 6 upgrade that grants i-frames on a parry kill. Never
+## shortens an existing window.
+func grant_invulnerability(seconds: float) -> void:
+	_invulnerable_left = maxf(_invulnerable_left, seconds)
 
 
 # --- Movement --------------------------------------------------------------
@@ -137,7 +182,10 @@ func _sweep_pulse() -> void:
 
 func _set_parry_radius(value: float) -> void:
 	parry_radius = value
-	if not is_node_ready():
+	# is_node_ready() is still false *inside* _ready(), so testing it here made
+	# the initial call a no-op and let an inspector-set radius silently disagree
+	# with the Area2D's actual reach. The @onready shape is the real signal.
+	if _parry_shape == null:
 		return
 	# Duplicated so upgrades never mutate the shape shared by the scene file.
 	var circle: CircleShape2D = (_parry_shape.shape as CircleShape2D).duplicate()
@@ -152,8 +200,17 @@ func _draw() -> void:
 		_draw_pulse()
 
 	var fill: Color = body_color if is_parry_ready() else body_color.darkened(0.55)
+	var edge: Color = outline_color
+
+	if is_invulnerable():
+		# Flash between the hurt colour and the body so the grace period is
+		# visible: knowing you are briefly safe changes whether you push in.
+		var blink: float = 0.5 + 0.5 * sin(_invulnerable_left * 34.0)
+		fill = fill.lerp(hurt_color, blink)
+		edge = edge.lerp(hurt_color, blink)
+
 	draw_circle(Vector2.ZERO, radius, fill, true, -1.0, true)
-	draw_arc(Vector2.ZERO, radius, 0.0, TAU, 32, outline_color, 2.0, true)
+	draw_arc(Vector2.ZERO, radius, 0.0, TAU, 32, edge, 2.0, true)
 	_draw_facing_notch()
 	_draw_cooldown()
 

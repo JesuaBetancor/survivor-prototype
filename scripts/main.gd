@@ -8,6 +8,8 @@ extends Node2D
 @onready var spawner: Spawner = $Spawner
 @onready var time_label: Label = $HUD/TimeLabel
 @onready var debug_label: Label = $HUD/DebugLabel
+@onready var health_pips: HealthPips = $HUD/HealthPips
+@onready var game_over: Control = $HUD/GameOver
 
 ## Single source of truth for elapsed survival time: both the HUD and the spawn
 ## cadence read it, so the clock on screen always matches the pressure.
@@ -24,16 +26,18 @@ func _ready() -> void:
 
 	player.movement_bounds = bounds
 	player.parry_pulsed.connect(_on_parry_pulsed)
+	player.health_changed.connect(health_pips.set_health)
+	player.died.connect(_on_player_died)
+	health_pips.set_health(player.health, player.max_health)
 	_apply_camera_limits(player.camera, bounds)
 
 	spawner.target = player
 	spawner.bounds = bounds
 	spawner.enemy_spawned.connect(_on_enemy_spawned)
 
+	($HUD/GameOver/Box/Retry as Button).pressed.connect(_on_retry_pressed)
 
-## The run clock drives both the HUD and the spawn cadence, so it lives on the
-## fixed timestep alongside them. Main sits above the spawner in the tree, so
-## the value is always current by the time the spawner reads it.
+
 func _physics_process(delta: float) -> void:
 	run_time += delta
 	spawner.run_time = run_time
@@ -48,6 +52,7 @@ func _process(_delta: float) -> void:
 		"Parries: %d de %d pulsos (%s acierto)" % [
 			_pulses_connected, _pulses, _accuracy_text()],
 		"Oleada: 1 enemigo cada %.2fs" % spawner.current_interval(),
+		"Mezcla: %s" % _mix_text(),
 	])
 
 
@@ -62,8 +67,22 @@ func _accuracy_text() -> String:
 	return "%d%%" % roundi(100.0 * float(_pulses_connected) / float(_pulses))
 
 
+## Live view of the spawn table, so it is obvious when a type unlocks and how
+## fast it is ramping in.
+func _mix_text() -> String:
+	var parts: PackedStringArray = []
+	for type: EnemyType in spawner.enemy_types:
+		var weight: float = type.weight_at(run_time)
+		if weight <= 0.0:
+			parts.append("%s (en %s)" % [type.display_name, format_clock(type.unlock_time)])
+		else:
+			parts.append("%s x%d [%d]" % [type.display_name, roundi(weight), spawner.alive_of(type)])
+	return "  ".join(parts)
+
+
 func _on_enemy_spawned(enemy: Enemy) -> void:
 	enemy.died.connect(_on_enemy_died)
+	enemy.hit_player.connect(player.take_damage)
 	enemy.hit_player.connect(_on_player_hit)
 
 
@@ -71,8 +90,6 @@ func _on_enemy_died(_enemy: Enemy, _xp: int) -> void:
 	_kills += 1
 
 
-## Player health arrives in phase 5; for now the hit is only counted so the
-## Attack state can be verified without a debugger.
 func _on_player_hit(_damage: int) -> void:
 	_hits_taken += 1
 
@@ -83,6 +100,22 @@ func _on_parry_pulsed(hits: int) -> void:
 	_pulses += 1
 	if hits > 0:
 		_pulses_connected += 1
+
+
+func _on_player_died() -> void:
+	($HUD/GameOver/Box/Summary as Label).text = "Sobreviviste %s" % format_clock(run_time)
+	($HUD/GameOver/Box/Detail as Label).text = "%d bajas · %d parries acertados de %d pulsos" % [
+		_kills, _pulses_connected, _pulses]
+	game_over.visible = true
+	($HUD/GameOver/Box/Retry as Button).grab_focus()
+	# The panel is process_mode ALWAYS, so it keeps working while everything
+	# else is frozen.
+	get_tree().paused = true
+
+
+func _on_retry_pressed() -> void:
+	get_tree().paused = false
+	get_tree().reload_current_scene()
 
 
 ## Keeps the camera from showing the void outside the arena.
