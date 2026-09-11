@@ -1,10 +1,24 @@
-# Godot 4+ specific ignores
+# Godot 4+
 .godot/
 /android/
+*.translation
 
-# macOS
-.DS_Store
-
-# Exported builds
+# Exported builds and packaged archives (~120 MB, not repo material)
 /build/
 /export/
+
+# NOTE: export_presets.cfg IS tracked on purpose. It currently holds nothing
+# secret: the macOS build is signed ad-hoc ("-") and notarization is off. If you
+# ever add a real signing identity, an Apple ID, an app-specific password or a
+# provisioning profile, that file becomes a secret and must be untracked first.
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*~
+
+# OS cruft
+.DS_Store
+Thumbs.db
+desktop.ini

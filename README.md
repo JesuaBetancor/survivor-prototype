@@ -1,153 +1,159 @@
-# Parry Survivor — prototipo
+# Parry Survivor — prototype
 
-Survivor-like donde **no hay auto-ataque**: tu única ofensiva es un **parry en
-pulso radial**. Pulsas un botón, se abre una ventana corta, y todo enemigo
-dentro de un radio que esté en su animación de ataque recibe el golpe. No
-apuntas a nadie: o están telegrafiando dentro del radio, o no pasa nada.
+A survivor-like with **no auto-attack**. Your only offence is a **radial parry
+pulse**: press a button, a short window opens, and every enemy inside a radius
+that is currently winding up an attack takes the hit. You never aim at anyone —
+either they are telegraphing inside the radius, or nothing happens.
 
-El prototipo existe para responder **una sola pregunta**: ¿se siente bien el
-parry? Todo lo demás está al mínimo a propósito.
+This prototype exists to answer **one question**: does the parry feel good?
+Everything else is deliberately minimal.
 
-Godot **4.7** · resolución 1280x720 · sin sprites: todo son formas geométricas.
+Godot **4.7** · 1280x720 · no sprites, every visual is a drawn geometric shape.
 
 ---
 
-## Cómo jugarlo
+## Playing it
 
-**Desde el binario** (no necesita Godot):
+**From a build** (no Godot needed):
 
 ```bash
-open build/ParrySurvivor.app
+open build/ParrySurvivor-macOS/ParrySurvivor.app
 ```
 
-Si no existe, genéralo con `./build.sh` (necesita las export templates de 4.7).
-La primera vez macOS puede quejarse porque está firmado ad-hoc: click derecho →
-*Abrir*.
+If it isn't there, run `./build.sh` (needs the 4.7 export templates).
 
-**Desde el código:**
+**From source:**
 
 ```bash
 ./run.sh
 ```
 
-## Repartirlo a otra gente
+## Handing it to other people
 
-`./build.sh` genera los tres builds y los empaqueta en `build/dist/`:
+`./build.sh` exports all three platforms and packages them into `build/dist/`:
 
-| Archivo | Tamaño | Notas |
+| Archive | Size | Notes |
 |---|---|---|
-| `ParrySurvivor-0.1.0-Windows.zip` | 36 MB | `.exe` único, x86_64 |
-| `ParrySurvivor-0.1.0-Linux.tar.gz` | 27 MB | x86_64, `tar` para conservar el bit de ejecución |
+| `ParrySurvivor-0.1.0-Windows.zip` | 36 MB | single `.exe`, x86_64, pck embedded |
+| `ParrySurvivor-0.1.0-Linux.tar.gz` | 27 MB | x86_64; `tar` so the executable bit survives |
 | `ParrySurvivor-0.1.0-macOS.zip` | 58 MB | universal (Apple Silicon + Intel) |
 
-Cada paquete lleva dentro un `LEEME.txt` con controles y **cómo saltarse el aviso
-del sistema**, porque los tres builds van sin firmar y los tres sistemas
-protestan:
+Every archive ships a `LEEME.txt` (Spanish — these builds were made for a
+specific group of friends) with the controls and how to get past the OS warning.
+None of the builds are signed, so all three systems object:
 
-- **Windows** — SmartScreen: *Más información* → *Ejecutar de todas formas*.
-- **macOS** — Gatekeeper puede decir que la app está "dañada". No lo está, es la
-  cuarentena de descarga: `xattr -dr com.apple.quarantine ParrySurvivor.app`.
-- **Linux** — `chmod +x` y listo.
+- **Windows** — SmartScreen: *More info* → *Run anyway*.
+- **macOS** — Gatekeeper may claim the app is "damaged". It isn't; that's the
+  download quarantine flag: `xattr -dr com.apple.quarantine ParrySurvivor.app`.
+- **Linux** — `chmod +x` and run.
 
-`build/` está en `.gitignore`: son ~120 MB, no van al repo. Súbelos a Drive, o
-crea una release en GitHub y adjúntalos ahí.
+`build/` is gitignored (~120 MB). Upload the archives somewhere, or attach them
+to a GitHub release.
 
-## Controles
+## Controls
 
-| Tecla | Acción |
+| Key | Action |
 |---|---|
-| `WASD` / flechas | Mover (8 direcciones, velocidad constante) |
-| `Espacio` o **click izquierdo** | Parry |
-| `E` | Generar 3 enemigos (debug) |
-| `R` | Reiniciar la partida |
-| `Esc` | Salir |
+| `WASD` / arrows | Move (8-directional, constant speed) |
+| `Space` or **left click** | Parry |
+| `E` | Spawn 3 enemies (debug) |
+| `R` | Restart the run |
+| `Esc` | Quit |
 
-El parry está mapeado a las dos entradas a propósito, para que compares cuál se
-siente mejor sin tocar código.
+Parry is bound to both inputs on purpose, so you can feel out which one reads
+better without touching code.
 
 ---
 
-## Cómo leer la pantalla
+## Reading the screen
 
-**La forma te dice la contra-jugada**, antes que el color:
+**Silhouette carries the counterplay**, ahead of colour:
 
-| Silueta | Tipo | Qué hacer |
+| Shape | Type | What to do |
 |---|---|---|
-| ● Círculo sólido rojo | **Fodder** — 1 parry | Parriar cuando se ponga amarillo |
-| ● Círculo grande morado | **Resistente** — 3 golpes, telegraph largo | Parriar 3 telegraphs distintos |
-| ▲ Triángulo cian | **Esquivable** — nunca parriable | Solo moverse. Máximo 5 a la vez |
-| ◎ Anillo rosa | **Tirador** — dispara desde 340 px | Esquivar el proyectil, o acercarte y parriarlo antes de que dispare |
+| ● Solid red circle | **Fodder** — dies to 1 parry | Parry when it turns yellow |
+| ● Large purple circle | **Resistente** — 3 hits, long telegraph | Parry three separate telegraphs |
+| ▲ Cyan triangle | **Esquivable** — never parriable | Move. Capped at 5 alive |
+| ◎ Pink ring | **Tirador** — fires from 340 px | Dodge the shot, or close in and parry it before it fires |
 
-**El amarillo siempre significa "parry ahora"**, en todos los tipos parriables.
-El anillo que se cierra sobre el enemigo es el tiempo que te queda: cuando toca
-el cuerpo, el golpe sale.
+**Yellow always means "parry now"**, across every parriable type. The ring
+closing in on an enemy is the time you have left: when it reaches the body, the
+attack lands.
 
-Alrededor de ti, el aro verde es el **cooldown** del parry rellenándose. El
-anillo grande al pulsar es el **radio real** del pulso: verde si conectó, gris
-si fallaste — así sabes si el error fue de timing o de posición.
-
----
-
-## Qué me interesa que mires
-
-En orden de importancia:
-
-1. **¿Engancha el pulso radial?** Es la apuesta central. La alternativa era un
-   parry dirigido uno-a-uno; cambiar a eso sería alcance, no arquitectura.
-2. **¿El telegraph avisa lo suficiente?** 0.8s en el fodder. Si te sobra tiempo,
-   el juego es demasiado permisivo; si no llegas nunca, es injusto.
-3. **¿Alguna mejora se siente obviamente mejor que las otras?** Si siempre eliges
-   radio, el pulso base es corto. Si siempre eliges cooldown, está muy castigado.
-4. **¿El minuto 1:05 y el 1:30 cambian algo?** Ahí entran tirador y triángulos.
-   Si no notas el cambio de ritmo, hay que subirles peso.
-5. **¿El hit-stop se siente como peso o como tirón?**
-
-El HUD de debug (arriba a la izquierda) muestra en vivo tu **% de acierto de
-pulsos**. Si acabas una partida con 95%, el parry es demasiado fácil.
+Around the player, the green arc is the parry **cooldown** refilling. The large
+ring on a pulse is its **true radius** — green if it connected, grey if it
+whiffed, so you can tell a timing mistake from a positioning one.
 
 ---
 
-## Qué tocar para ajustar
+## What to look at
 
-Todo son `@export`: se cambian desde el inspector de Godot sin recompilar.
+In priority order:
 
-| Quiero cambiar… | Dónde |
+1. **Does the radial pulse hold up?** That's the central bet. The alternative was
+   a one-to-one directed parry; switching would be a scope change, not an
+   architectural one.
+2. **Does the telegraph give enough warning?** 0.8s on fodder. Too much time and
+   the game is permissive; never enough and it's unfair.
+3. **Is one upgrade obviously better than the others?** Always picking radius
+   means the base pulse is too small. Always picking cooldown means it's too
+   punishing.
+4. **Do 1:05 and 1:30 change anything?** That's when the shooters and the
+   triangles unlock. If the rhythm doesn't shift, they need more weight.
+5. **Does the hit-stop read as weight, or as a stutter?**
+
+The debug HUD (top left) shows a live **pulse accuracy** percentage. Finishing a
+run at 95% means the parry is too easy.
+
+---
+
+## Tuning
+
+Everything below is an `@export`, changeable from the Godot inspector without
+touching code.
+
+| To change… | Where |
 |---|---|
-| Ventana, radio, cooldown, daño, i-frames | Nodo `Player` en `scenes/main.tscn` |
-| Vida del jugador | `Player` → `max_health` |
-| Aviso del telegraph, velocidad, rango, golpes | El `.tres` del tipo en `resources/` |
-| Cuándo aparece cada tipo y con qué peso | El mismo `.tres`, grupo *Spawning* |
-| Ritmo de las oleadas | Nodo `Spawner` → `base_interval`, `min_interval`, `ramp_seconds` |
-| Fuerza del hit-stop y del shake | Nodo `Main` → grupo *Juice* |
-| Tamaño de la arena | Nodo `Arena` → `size` |
+| Window, radius, cooldown, damage, i-frames | `Player` node in `scenes/main.tscn` |
+| Player health | `Player` → `max_health` |
+| Telegraph warning, speed, range, hits to kill | That type's `.tres` in `resources/` |
+| When a type unlocks and how heavily it spawns | Same `.tres`, *Spawning* group |
+| Wave pacing | `Spawner` → `base_interval`, `min_interval`, `ramp_seconds` |
+| Hit-stop and shake strength | `Main` node → *Juice* group |
+| Arena size | `Arena` → `size` |
 
-Añadir un tipo de enemigo nuevo es **un `.tres` más**, no una escena nueva: hay
-una sola `enemy.tscn` para todos.
+Adding an enemy type is **one more `.tres`**, not a new scene — a single
+`enemy.tscn` backs all of them.
 
 ---
 
-## Estructura
+## Layout
 
 ```
 scenes/     main, player, enemy, projectile, floating_text
-scripts/    un script por sistema; todo con tipado estático
-resources/  un .tres por tipo de enemigo (stats + calendario de aparición)
+scripts/    one script per system, statically typed throughout
+resources/  one .tres per enemy type (stats + spawn schedule)
 ```
 
-Piezas que conviene conocer antes de tocar nada:
+Worth reading before changing anything:
 
-- `enemy.gd` — la máquina de estados `Idle → Telegraph → Attack → Recovery`.
-  Solo `Telegraph` es parriable.
-- `player.gd` — el pulso de parry. El `Area2D` monitoriza **siempre**; el pulso
-  es lógico. Encenderla al pulsar costaría un frame de latencia.
-- `upgrades.gd` — el pool de mejoras, con sus topes.
-- `sfx.gd` — **audio placeholder sintetizado en runtime**. No hay ni un asset de
-  sonido; hay que sustituirlo antes de enseñárselo a nadie.
+- `enemy.gd` — the `Idle → Telegraph → Attack → Recovery` state machine. Only
+  `Telegraph` is parriable. It's an enum and a `match`, not a tree of state
+  nodes: at survivor-like enemy counts, per-node state objects cost more than
+  they clarify.
+- `player.gd` — the parry pulse. The `Area2D` monitors **continuously** and the
+  pulse is purely logical. Switching monitoring on at press time would cost a
+  physics frame of latency in the one place that can't afford it.
+- `upgrades.gd` — the upgrade pool and its caps. The damage cap is derived from
+  the roster rather than fixed, so the toughest enemy always costs at least two
+  parries.
+- `sfx.gd` — **placeholder audio synthesised at runtime**. There is not a single
+  sound asset in this repo; replace these before anyone else hears them.
 
-## Fuera de alcance (a propósito)
+## Deliberately out of scope
 
-Sin exportación a Steam/itch, sin arte final, sin menú principal, sin guardado.
-El roster tiene 4 tipos (uno más de los 3 previstos: el tirador se añadió para
-que la mejora de radio significara algo).
+No store packaging, no final art, no main menu, no save system. The roster has
+four types — one more than originally planned; the shooter was added so the
+pulse-radius upgrade had something to do.
 
-Las ideas aparcadas para después del prototipo están en [BACKLOG.md](BACKLOG.md).
+Ideas parked for after the prototype live in [BACKLOG.md](BACKLOG.md).
